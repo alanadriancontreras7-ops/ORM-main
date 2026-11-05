@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockMaster - Gestión de Inventario ORM</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Header / Navigation Bar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Logo and System Name -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('dashboard')">
+          <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+            <i class="fa-solid fa-boxes-stacked text-lg"></i>
+          </div>
+          <div>
+            <span class="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+              StockMaster <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200">ORM</span>
+            </span>
+            <p class="text-xs text-slate-500 font-medium hidden sm:block">Control de Productos, Categorías y Entradas</p>
+          </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="hidden md:flex items-center space-x-1">
+          <button id="nav-dashboard" onclick="navigateTo('dashboard')" 
+                  class="nav-tab px-3 py-2 rounded-lg text-sm font-semibold transition-all text-indigo-600 bg-indigo-50 flex items-center gap-2">
+            <i class="fa-solid fa-chart-pie"></i>
+            Dashboard
+          </button>
+          <button id="nav-productos" onclick="navigateTo('productos')" 
+                  class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-box-archive"></i>
+            Productos
+          </button>
+          <button id="nav-categorias" onclick="navigateTo('categorias')" 
+                  class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-tags"></i>
+            Categorías
+          </button>
+          <button id="nav-entradas" onclick="navigateTo('entradas')" 
+                  class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-truck-ramp-box"></i>
+            Entradas
+          </button>
+          <a id="nav-swagger" href="/apidocs" target="_blank" 
+             class="px-3 py-2 rounded-lg text-sm font-medium transition-all text-slate-500 hover:text-indigo-600 hover:bg-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-book-bookmark text-amber-500"></i>
+            Swagger API
+            <i class="fa-solid fa-arrow-up-right-from-square text-xs opacity-60"></i>
+          </a>
+        </nav>
+
+        <!-- Right Side: API Status Pill & Action Buttons -->
+        <div class="flex items-center space-x-3">
+          <!-- API Status Pill -->
+          <button onclick="openApiConfigModal()" 
+                  id="api-status-badge" 
+                  title="Configurar conexión de API" 
+                  class="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 transition-all hover:shadow-sm">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-online" id="status-dot"></span>
+            <span id="status-text">API Online</span>
+            <i class="fa-solid fa-gear text-slate-400 hover:text-slate-600 text-xs ml-0.5"></i>
+          </button>
+
+          <!-- Quick Action Dropdown / Button -->
+          <button onclick="openProductModal()" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-all shadow-indigo-100">
+            <i class="fa-solid fa-plus"></i>
+            <span>Nuevo Producto</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Mobile Nav Bar -->
+    <div class="md:hidden border-t border-slate-200 px-4 py-2 bg-slate-50 flex items-center justify-around text-xs">
+      <button onclick="navigateTo('dashboard')" class="flex flex-col items-center py-1 text-indigo-600 font-semibold">
+        <i class="fa-solid fa-chart-pie text-base mb-0.5"></i> Dashboard
+      </button>
+      <button onclick="navigateTo('productos')" class="flex flex-col items-center py-1 text-slate-600">
+        <i class="fa-solid fa-box-archive text-base mb-0.5"></i> Productos
+      </button>
+      <button onclick="navigateTo('categorias')" class="flex flex-col items-center py-1 text-slate-600">
+        <i class="fa-solid fa-tags text-base mb-0.5"></i> Categorías
+      </button>
+      <button onclick="navigateTo('entradas')" class="flex flex-col items-center py-1 text-slate-600">
+        <i class="fa-solid fa-truck-ramp-box text-base mb-0.5"></i> Entradas
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Body -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ========================================== -->
+    <!-- VIEW: DASHBOARD                            -->
+    <!-- ========================================== -->
+    <section id="view-dashboard" class="view-section active">
+      
+      <!-- Welcome Banner -->
+      <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Panel de Control</h1>
+          <p class="text-sm text-slate-500">Resumen en tiempo real del inventario, catálogo y movimientos</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="fetchAllData()" class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm transition-all">
+            <i class="fa-solid fa-arrows-rotate text-slate-500" id="refresh-icon"></i>
+            Actualizar
+          </button>
+          <button onclick="openEntradaModal()" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all">
+            <i class="fa-solid fa-truck-arrow-right"></i>
+            Registrar Entrada
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Metrics Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        
+        <!-- Total Productos -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Productos</p>
+            <h3 class="text-3xl font-extrabold text-slate-900 mt-1" id="kpi-total-productos">-</h3>
+            <span class="text-xs text-indigo-600 font-semibold mt-1 inline-flex items-center gap-1">
+              <i class="fa-solid fa-box"></i> En catálogo
+            </span>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-boxes-stacked"></i>
+          </div>
+        </div>
+
+        <!-- Total Categorías -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Categorías</p>
+            <h3 class="text-3xl font-extrabold text-slate-900 mt-1" id="kpi-total-categorias">-</h3>
+            <span class="text-xs text-sky-600 font-semibold mt-1 inline-flex items-center gap-1">
+              <i class="fa-solid fa-layer-group"></i> Familias activas
+            </span>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-tags"></i>
+          </div>
+        </div>
+
+        <!-- Total Entradas -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Movimientos Entrada</p>
+            <h3 class="text-3xl font-extrabold text-slate-900 mt-1" id="kpi-total-entradas">-</h3>
+            <span class="text-xs text-emerald-600 font-semibold mt-1 inline-flex items-center gap-1">
+              <i class="fa-solid fa-receipt"></i> Lotes recibidos
+            </span>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-arrow-down-wide-short"></i>
+          </div>
+        </div>
+
+        <!-- Unidades en Stock -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Unidades Totales</p>
+            <h3 class="text-3xl font-extrabold text-slate-900 mt-1" id="kpi-total-unidades">-</h3>
+            <span class="text-xs text-amber-600 font-semibold mt-1 inline-flex items-center gap-1" id="kpi-low-stock-count">
+              <i class="fa-solid fa-shield-halved"></i> En inventario
+            </span>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-warehouse"></i>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Dashboard Grid: Low Stock Alert & Recent Activity -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        
+        <!-- Left: Low Stock Alerts -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <h2 class="text-lg font-bold text-slate-900">Atención: Monitoreo de Stock</h2>
+            </div>
+            <button onclick="navigateTo('productos')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+              Ver todos &rarr;
+            </button>
+          </div>
+          
+          <div id="dashboard-low-stock-list" class="space-y-3">
+            <!-- Dynamic rows inserted here -->
+            <div class="text-center py-8 text-slate-400">
+              <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
+              <p>Cargando información de stock...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Categorías Overview -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-pie-chart"></i>
+              </div>
+              <h2 class="text-lg font-bold text-slate-900">Por Categoría</h2>
+            </div>
+            <button onclick="navigateTo('categorias')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+              Gestionar &rarr;
+            </button>
+          </div>
+
+          <div id="dashboard-categories-list" class="space-y-4">
+            <!-- Dynamic bars inserted here -->
+            <div class="text-center py-8 text-slate-400">
+              <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
+              <p>Cargando categorías...</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Recent Entradas Table on Dashboard -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+            </div>
+            <h2 class="text-lg font-bold text-slate-900">Últimas Entradas al Inventario</h2>
+          </div>
+          <button onclick="navigateTo('entradas')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+            Ver todas las entradas &rarr;
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50/50">
+                <th class="py-3 px-4">ID</th>
+                <th class="py-3 px-4">Fecha</th>
+                <th class="py-3 px-4">Producto</th>
+                <th class="py-3 px-4">Cantidad</th>
+                <th class="py-3 px-4">Factura</th>
+                <th class="py-3 px-4">Ubicación / Stand</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-recent-entradas" class="divide-y divide-slate-100 text-sm">
+              <tr>
+                <td colspan="6" class="text-center py-6 text-slate-400">
+                  <i class="fa-solid fa-spinner fa-spin text-xl mb-2"></i>
+                  <p>Cargando movimientos recientes...</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW: PRODUCTOS                            -->
+    <!-- ========================================== -->
+    <section id="view-productos" class="view-section">
+      
+      <!-- Header & Action Toolbar -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Catálogo de Productos</h1>
+          <p class="text-sm text-slate-500">Gestión de artículos, precios, stock y categorías asociadas</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="openProductModal()" class="btn-primary px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-plus"></i>
+            Nuevo Producto
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters & Search Toolbar -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm mb-6 flex flex-col md:flex-row items-center gap-4">
+        <!-- Search Input -->
+        <div class="relative flex-1 w-full">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input type="text" id="product-search" oninput="filterProducts()" 
+                 placeholder="Buscar por nombre o descripción..." 
+                 class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+        </div>
+
+        <!-- Filter: Categoria -->
+        <div class="w-full md:w-56">
+          <select id="product-filter-cat" onchange="filterProducts()" 
+                  class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700">
+            <option value="">Todas las categorías</option>
+          </select>
+        </div>
+
+        <!-- Filter: Disponibilidad -->
+        <div class="w-full md:w-48">
+          <select id="product-filter-status" onchange="filterProducts()" 
+                  class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700">
+            <option value="">Todos los estados</option>
+            <option value="disponible">Disponibles</option>
+            <option value="agotado">No disponibles</option>
+          </select>
+        </div>
+
+        <!-- Reset Button -->
+        <button onclick="resetProductFilters()" title="Limpiar filtros" class="p-2.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-filter-circle-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Products Table -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50/75 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th class="py-3.5 px-4 w-16">ID</th>
+                <th class="py-3.5 px-4">Producto</th>
+                <th class="py-3.5 px-4">Categoría</th>
+                <th class="py-3.5 px-4">Precio</th>
+                <th class="py-3.5 px-4">Stock Actual</th>
+                <th class="py-3.5 px-4">Stock Mín.</th>
+                <th class="py-3.5 px-4">Estado</th>
+                <th class="py-3.5 px-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="products-table-body" class="divide-y divide-slate-100 text-sm">
+              <tr>
+                <td colspan="8" class="text-center py-12 text-slate-400">
+                  <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-indigo-500"></i>
+                  <p>Cargando productos...</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table Footer / Count -->
+        <div class="px-4 py-3 bg-slate-50/50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+          <span id="products-count-badge">Mostrando 0 productos</span>
+          <span>Base de datos: MySQL (ORM SQLAlchemy)</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW: CATEGORÍAS                           -->
+    <!-- ========================================== -->
+    <section id="view-categorias" class="view-section">
+      
+      <!-- Header & Action Toolbar -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Gestión de Categorías</h1>
+          <p class="text-sm text-slate-500">Organización y clasificación de los productos del catálogo</p>
+        </div>
+        <div>
+          <button onclick="openCategoryModal()" class="btn-primary px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-plus"></i>
+            Nueva Categoría
+          </button>
+        </div>
+      </div>
+
+      <!-- Search Category -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm mb-6 flex items-center gap-4">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input type="text" id="category-search" oninput="filterCategories()" 
+                 placeholder="Buscar categoría por nombre o descripción..." 
+                 class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+        </div>
+      </div>
+
+      <!-- Categories Cards Grid -->
+      <div id="categories-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="col-span-full text-center py-12 text-slate-400">
+          <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-indigo-500"></i>
+          <p>Cargando categorías...</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW: ENTRADAS                             -->
+    <!-- ========================================== -->
+    <section id="view-entradas" class="view-section">
+      
+      <!-- Header & Action Toolbar -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Registro de Entradas (Inventario)</h1>
+          <p class="text-sm text-slate-500">Recepción de mercancía, lotes por factura, stands y ubicaciones físicas</p>
+        </div>
+        <div>
+          <button onclick="openEntradaModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm transition-all shadow-emerald-100">
+            <i class="fa-solid fa-plus"></i>
+            Registrar Entrada
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters & Search Toolbar -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm mb-6 flex flex-col md:flex-row items-center gap-4">
+        <!-- Search Input -->
+        <div class="relative flex-1 w-full">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input type="text" id="entrada-search" oninput="filterEntradas()" 
+                 placeholder="Buscar por factura, stand, producto o ubicación..." 
+                 class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+        </div>
+
+        <!-- Filter by Product -->
+        <div class="w-full md:w-64">
+          <select id="entrada-filter-prod" onchange="filterEntradas()" 
+                  class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700">
+            <option value="">Todos los productos</option>
+          </select>
+        </div>
+
+        <!-- Reset Button -->
+        <button onclick="resetEntradaFilters()" title="Limpiar filtros" class="p-2.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-filter-circle-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Entradas Table -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50/75 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th class="py-3.5 px-4 w-16">ID</th>
+                <th class="py-3.5 px-4">Fecha</th>
+                <th class="py-3.5 px-4">Producto</th>
+                <th class="py-3.5 px-4">Cantidad</th>
+                <th class="py-3.5 px-4">N° Factura</th>
+                <th class="py-3.5 px-4">Stand</th>
+                <th class="py-3.5 px-4">Ubicación</th>
+                <th class="py-3.5 px-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="entradas-table-body" class="divide-y divide-slate-100 text-sm">
+              <tr>
+                <td colspan="8" class="text-center py-12 text-slate-400">
+                  <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-indigo-500"></i>
+                  <p>Cargando entradas de inventario...</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table Footer / Count -->
+        <div class="px-4 py-3 bg-slate-50/50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+          <span id="entradas-count-badge">Mostrando 0 entradas</span>
+          <span>Modelo ORM: Entrada</span>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODALS                                     -->
+  <!-- ========================================== -->
+
+  <!-- 1. MODAL: PRODUCTO (Crear / Editar) -->
+  <div id="modal-producto" class="modal-backdrop">
+    <div class="modal-content bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 p-6 m-4">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+        <h3 id="modal-product-title" class="text-lg font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-box text-indigo-600"></i>
+          <span>Nuevo Producto</span>
+        </h3>
+        <button onclick="closeProductModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="form-producto" onsubmit="handleProductSubmit(event)" class="space-y-4">
+        <input type="hidden" id="prod-id" value="">
+
+        <!-- Nombre -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nombre del Producto *</label>
+          <input type="text" id="prod-nombre" required placeholder="Ej: Laptop Lenovo ThinkPad" 
+                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+        </div>
+
+        <!-- Categoría -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Categoría *</label>
+          <select id="prod-categoria" required 
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700">
+            <option value="">Selecciona una categoría...</option>
+          </select>
+        </div>
+
+        <!-- Precio & Stock Mínimo -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Precio Unitario ($) *</label>
+            <input type="number" step="0.01" min="0.01" id="prod-precio" required placeholder="0.00" 
+                   class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Stock Mínimo Alerta</label>
+            <input type="number" min="0" step="1" id="prod-stock-min" value="5" 
+                   class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+          </div>
+        </div>
+
+        <!-- Descripción -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Descripción</label>
+          <textarea id="prod-descripcion" rows="3" placeholder="Detalles, especificaciones o notas del artículo..." 
+                    class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"></textarea>
+        </div>
+
+        <!-- Switch Disponible -->
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <div>
+            <span class="text-sm font-semibold text-slate-800">Estado de Disponibilidad</span>
+            <p class="text-xs text-slate-500">¿El producto está activo y disponible para operaciones?</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="prod-disponible" checked class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+          </label>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="closeProductModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
+            Cancelar
+          </button>
+          <button type="submit" id="btn-save-product" class="btn-primary px-5 py-2 text-sm font-semibold rounded-xl shadow-sm flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i>
+            Guardar Producto
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. MODAL: CATEGORÍA (Crear / Editar) -->
+  <div id="modal-categoria" class="modal-backdrop">
+    <div class="modal-content bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 m-4">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+        <h3 id="modal-category-title" class="text-lg font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-tags text-indigo-600"></i>
+          <span>Nueva Categoría</span>
+        </h3>
+        <button onclick="closeCategoryModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="form-categoria" onsubmit="handleCategorySubmit(event)" class="space-y-4">
+        <input type="hidden" id="cat-id" value="">
+
+        <!-- Nombre -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nombre de la Categoría *</label>
+          <input type="text" id="cat-nombre" required placeholder="Ej: Herramientas y Ferretería" 
+                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+        </div>
+
+        <!-- Descripción -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Descripción *</label>
+          <textarea id="cat-descripcion" rows="3" required placeholder="Breve descripción del grupo de productos..." 
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"></textarea>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="closeCategoryModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
+            Cancelar
+          </button>
+          <button type="submit" id="btn-save-category" class="btn-primary px-5 py-2 text-sm font-semibold rounded-xl shadow-sm flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i>
+            Guardar Categoría
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. MODAL: ENTRADA (Crear / Editar) -->
+  <div id="modal-entrada" class="modal-backdrop">
+    <div class="modal-content bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 p-6 m-4">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+        <h3 id="modal-entrada-title" class="text-lg font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-truck-ramp-box text-emerald-600"></i>
+          <span>Registrar Entrada de Inventario</span>
+        </h3>
+        <button onclick="closeEntradaModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="form-entrada" onsubmit="handleEntradaSubmit(event)" class="space-y-4">
+        <input type="hidden" id="ent-id" value="">
+
+        <!-- Producto -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Producto a ingresar *</label>
+          <select id="ent-producto-id" required 
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-700">
+            <option value="">Selecciona el producto...</option>
+          </select>
+        </div>
+
+        <!-- Cantidad & Factura -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Cantidad de unidades *</label>
+            <input type="number" min="1" step="1" id="ent-cantidad" required placeholder="Ej: 50" 
+                   class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">N° Factura / Guía</label>
+            <input type="text" id="ent-factura" placeholder="Ej: FAC-2026-890" 
+                   class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+          </div>
+        </div>
+
+        <!-- Stand & Ubicación -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Stand / Estante</label>
+            <input type="text" id="ent-stand" placeholder="Ej: A-3, B-12" 
+                   class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Ubicación / Bodega</label>
+            <input type="text" id="ent-ubicacion" placeholder="Ej: Bodega Central, Pasillo 4" 
+                   class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="closeEntradaModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
+            Cancelar
+          </button>
+          <button type="submit" id="btn-save-entrada" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 text-sm font-semibold rounded-xl shadow-sm flex items-center gap-2 transition-all">
+            <i class="fa-solid fa-truck-arrow-right"></i>
+            Guardar Entrada
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. MODAL: DETALLE DE PRODUCTO -->
+  <div id="modal-detalle-producto" class="modal-backdrop">
+    <div class="modal-content bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 p-6 m-4">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+        <div>
+          <span id="detail-category-badge" class="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">Categoría</span>
+          <h3 id="detail-product-name" class="text-xl font-bold text-slate-900 mt-1">Nombre del Producto</h3>
+        </div>
+        <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <span class="text-xs text-slate-500 uppercase font-semibold">Precio</span>
+          <p id="detail-product-price" class="text-lg font-bold text-slate-900 mt-0.5">$0.00</p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <span class="text-xs text-slate-500 uppercase font-semibold">Stock Actual</span>
+          <p id="detail-product-stock" class="text-lg font-bold text-indigo-600 mt-0.5">0 unid.</p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <span class="text-xs text-slate-500 uppercase font-semibold">Stock Mínimo</span>
+          <p id="detail-product-stockmin" class="text-lg font-bold text-slate-700 mt-0.5">0</p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <span class="text-xs text-slate-500 uppercase font-semibold">Estado</span>
+          <div id="detail-product-status" class="mt-1">
+            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">Disponible</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Descripción -->
+      <div class="mb-6">
+        <h4 class="text-xs font-semibold text-slate-500 uppercase mb-1">Descripción</h4>
+        <p id="detail-product-desc" class="text-sm text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
+          Sin descripción.
+        </p>
+      </div>
+
+      <!-- Historial de Entradas asociadas a este producto -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-xs font-semibold text-slate-500 uppercase flex items-center gap-1.5">
+            <i class="fa-solid fa-history text-slate-400"></i>
+            Historial de Entradas de este Producto
+          </h4>
+          <button id="btn-quick-entrada" class="text-xs text-emerald-600 font-semibold hover:text-emerald-700">
+            + Añadir Entrada
+          </button>
+        </div>
+        <div class="max-h-48 overflow-y-auto border border-slate-200 rounded-xl">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold sticky top-0">
+              <tr>
+                <th class="p-2">Fecha</th>
+                <th class="p-2">Cantidad</th>
+                <th class="p-2">Factura</th>
+                <th class="p-2">Stand / Ubicación</th>
+              </tr>
+            </thead>
+            <tbody id="detail-product-entradas-body" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-5 border-t border-slate-100 mt-6">
+        <button onclick="closeDetailModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. MODAL: CONFIGURACIÓN DE API -->
+  <div id="modal-api-config" class="modal-backdrop">
+    <div class="modal-content bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 m-4">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-network-wired text-indigo-600"></i>
+          <span>Configuración de Servidor API</span>
+        </h3>
+        <button onclick="closeApiConfigModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <p class="text-xs text-slate-500 leading-relaxed">
+          Por defecto, el frontend se comunica con el servidor Flask en el puerto <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-600 font-mono">5000</code>. Si iniciaste Flask en otra IP o puerto, cámbialo a continuación:
+        </p>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">URL Base del Backend</label>
+          <input type="text" id="api-base-url-input" placeholder="http://127.0.0.1:5000" 
+                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+        </div>
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
+          <div class="flex justify-between">
+            <span class="font-medium">Estado actual:</span>
+            <span id="api-diag-status" class="font-bold text-emerald-600">Verificando...</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="font-medium">Documentación:</span>
+            <a id="api-diag-swagger" href="/apidocs" target="_blank" class="text-indigo-600 underline">Abrir Swagger UI</a>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="closeApiConfigModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
+            Cancelar
+          </button>
+          <button type="button" onclick="saveApiConfig()" class="btn-primary px-5 py-2 text-sm font-semibold rounded-xl shadow-sm flex items-center gap-2">
+            <i class="fa-solid fa-check"></i>
+            Guardar y Probar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+      <div class="flex items-center gap-2">
+        <span class="font-semibold text-slate-700">StockMaster ORM</span> &bull; 
+        <span>Arquitectura Flask + SQLAlchemy + MySQL</span>
+      </div>
+      <div>
+        <span>Endpoints REST API documentados con Swagger &bull; </span>
+        <a href="/apidocs" target="_blank" class="text-indigo-600 hover:underline font-semibold">Swagger UI</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
