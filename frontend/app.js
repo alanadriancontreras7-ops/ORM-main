@@ -1120,25 +1120,31 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-  backdrop.addEventListener('click', (e) => {
-    if (e.target === backdrop) {
-      closeProductModal();
-      closeCategoryModal();
-      closeEntradaModal();
-      closeDetailModal();
-      closeApiConfigModal();
-    }
-  });
-});
-
-// Initialize on page load
-window.addEventListener('DOMContentLoaded', () => {
-  // Update swagger link href
+// Modal backdrop click handlers & initialization
+function initApp() {
   const swaggerNav = document.getElementById('nav-swagger');
   if (swaggerNav) swaggerNav.href = `${CONFIG.getApiBaseUrl()}/apidocs`;
 
-  // Fetch all initial data
+  document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) {
+        closeProductModal();
+        closeCategoryModal();
+        closeEntradaModal();
+        closeDetailModal();
+        closeApiConfigModal();
+      }
+    });
+  });
+
+  // Fetch initial data
   fetchAllData();
-});
+}
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
+
 
